@@ -2,6 +2,7 @@ const std = @import("std");
 const Peekable = @import("adapters/peekable.zig").Peekable;
 const StepBy = @import("adapters/step.zig").StepBy;
 const Skip = @import("adapters/skip.zig").Skip;
+const Take = @import("adapters/take.zig").Take;
 const meta = @import("meta.zig");
 
 const testing = std.testing;
@@ -108,6 +109,16 @@ test "derive count" {
     try testing.expectEqual(@as(usize, 3), iter.count());
 }
 
+pub fn DeriveTake(comptime Iter: type) type {
+    comptime {
+        return struct {
+            pub fn take(self: Iter, size: usize) Take(Iter) {
+                return Take(Iter).init(self, size);
+            }
+        };
+    }
+}
+
 pub fn DeriveIterator(comptime Iter: type) type {
     comptime {
         return struct {
@@ -117,6 +128,7 @@ pub fn DeriveIterator(comptime Iter: type) type {
             pub usingnamespace DeriveSkip(Iter);
             pub usingnamespace DeriveLast(Iter);
             pub usingnamespace DeriveCount(Iter);
+            pub usingnamespace DeriveTake(Iter);
         };
     }
 }
@@ -125,5 +137,6 @@ test {
     _ = @import("adapters/peekable.zig");
     _ = @import("adapters/step.zig");
     _ = @import("adapters/skip.zig");
+    _ = @import("adapters/take.zig");
     std.testing.refAllDecls(@This());
 }
