@@ -18,7 +18,7 @@ pub fn Skip(comptime Iter: type) type {
 
         pub fn next(self: *Self) ?Item {
             while (0 < self.skip) : (self.skip -= 1) {
-                // TODO: destroy if the aquired value is owned
+                // TODO: destroy if the acquired value is owned
                 _ = self.iter.next();
             }
             return self.iter.next();

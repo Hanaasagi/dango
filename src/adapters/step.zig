@@ -21,7 +21,7 @@ pub fn StepBy(comptime Iter: type) type {
                 var step = self.step_by - 1;
                 var item = self.iter.next();
                 while (0 < step) : (step -= 1) {
-                    // TODO: destroy if the aquired value is owned
+                    // TODO: destroy if the acquired value is owned
                     _ = self.iter.next();
                 }
                 return item;
