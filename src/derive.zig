@@ -32,17 +32,12 @@ pub fn DeriveStepBy(comptime Iter: type) type {
     }
 }
 
-pub fn DeriveIterator(comptime Iter: type) type {
-    comptime {
-        return struct {
-            pub usingnamespace DerivePeekable(Iter);
-            pub usingnamespace DeriveStepBy(Iter);
-            pub usingnamespace DeriveNth(Iter);
-            pub usingnamespace DeriveSkip(Iter);
-
-            // TODO:
-        };
-    }
+pub fn DeriveSkip(comptime Iter: type) type {
+    return struct {
+        pub fn skip(self: Iter, size: usize) Skip(Iter) {
+            return Skip(Iter).init(self, size);
+        }
+    };
 }
 
 pub fn DeriveNth(comptime Iter: type) type {
@@ -60,14 +55,6 @@ pub fn DeriveNth(comptime Iter: type) type {
     }
 }
 
-pub fn DeriveSkip(comptime Iter: type) type {
-    return struct {
-        pub fn skip(self: Iter, size: usize) Skip(Iter) {
-            return Skip(Iter).init(self, size);
-        }
-    };
-}
-
 test "derive nth" {
     const sliceIter = @import("./iterator.zig").sliceIter;
 
@@ -76,6 +63,62 @@ test "derive nth" {
     try testing.expectEqual(arr[1], sliceIter(arr[0..]).nth(1).?.*);
     try testing.expectEqual(arr[2], sliceIter(arr[0..]).nth(2).?.*);
     try testing.expectEqual(@as(?*i32, null), sliceIter(arr[0..]).nth(3));
+}
+
+pub fn DeriveLast(comptime Iter: type) type {
+    comptime {
+        return struct {
+            pub fn last(self: *Iter) ?Iter.Item {
+                var ls: ?Iter.Item = null;
+                while (self.next()) |val| {
+                    ls = val;
+                }
+                return ls;
+            }
+        };
+    }
+}
+test "derive last" {
+    const sliceIter = @import("./iterator.zig").sliceIter;
+
+    var arr = [_]i32{ 1, 2, 3 };
+    var iter = sliceIter(arr[0..]);
+    try testing.expectEqual(@as(i32, 3), iter.last().?.*);
+}
+
+pub fn DeriveCount(comptime Iter: type) type {
+    comptime {
+        return struct {
+            pub fn count(self: *Iter) usize {
+                var i: usize = 0;
+                while (self.next()) |_| {
+                    i += 1;
+                }
+                return i;
+            }
+        };
+    }
+}
+
+test "derive count" {
+    const sliceIter = @import("./iterator.zig").sliceIter;
+
+    var arr = [_]i32{ 1, 2, 3 };
+    var iter = sliceIter(arr[0..]);
+    try testing.expectEqual(@as(usize, 3), iter.count());
+}
+
+pub fn DeriveIterator(comptime Iter: type) type {
+    comptime {
+        return struct {
+            pub usingnamespace DerivePeekable(Iter);
+            pub usingnamespace DeriveStepBy(Iter);
+            pub usingnamespace DeriveNth(Iter);
+            pub usingnamespace DeriveSkip(Iter);
+            pub usingnamespace DeriveLast(Iter);
+            pub usingnamespace DeriveCount(Iter);
+        };
+    }
 }
 
 test {
