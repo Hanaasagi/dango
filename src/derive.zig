@@ -3,6 +3,7 @@ const Peekable = @import("adapters/peekable.zig").Peekable;
 const StepBy = @import("adapters/step.zig").StepBy;
 const Skip = @import("adapters/skip.zig").Skip;
 const Take = @import("adapters/take.zig").Take;
+const Fuse = @import("adapters/fuse.zig").Fuse;
 const meta = @import("meta.zig");
 
 const testing = std.testing;
@@ -118,6 +119,15 @@ pub fn DeriveTake(comptime Iter: type) type {
         };
     }
 }
+pub fn DeriveFuse(comptime Iter: type) type {
+    comptime {
+        return struct {
+            pub fn fuse(self: Iter) Fuse(Iter) {
+                return Fuse(Iter).init(self);
+            }
+        };
+    }
+}
 
 pub fn DeriveIterator(comptime Iter: type) type {
     comptime {
@@ -129,6 +139,7 @@ pub fn DeriveIterator(comptime Iter: type) type {
             pub usingnamespace DeriveLast(Iter);
             pub usingnamespace DeriveCount(Iter);
             pub usingnamespace DeriveTake(Iter);
+            pub usingnamespace DeriveFuse(Iter);
         };
     }
 }
@@ -138,5 +149,6 @@ test {
     _ = @import("adapters/step.zig");
     _ = @import("adapters/skip.zig");
     _ = @import("adapters/take.zig");
+    _ = @import("adapters/fuse.zig");
     std.testing.refAllDecls(@This());
 }
