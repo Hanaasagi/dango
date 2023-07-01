@@ -151,6 +151,53 @@ pub fn DeriveFilter(comptime Iter: type) type {
     }
 }
 
+pub fn DeriveFold(comptime Iter: type) type {
+    comptime {
+        return struct {
+            pub fn fold(self: Iter, init: anytype, f: anytype) @TypeOf(init) {
+                var it = self;
+                var acc = init;
+                while (it.next()) |value| {
+                    if (@typeInfo(@TypeOf(f)) == .Fn) {
+                        acc = f(acc, value);
+                    } else {
+                        acc = f.call(.{ acc, value });
+                    }
+                }
+                return acc;
+            }
+        };
+    }
+}
+
+test "test fold function" {
+    const sliceIter = @import("iterator.zig").sliceIter;
+
+    var arr = [_]i32{ 1, 2, 3 };
+    const acc = sliceIter(arr[0..]).fold(@as(i32, 0), struct {
+        fn acc(sum: i32, val: *i32) i32 {
+            return sum + val.*;
+        }
+    }.acc);
+
+    try testing.expectEqual(@as(i32, 6), acc);
+}
+
+test "test fold closure" {
+    const closure = @import("closure.zig").closure;
+    const sliceIter = @import("iterator.zig").sliceIter;
+
+    var arr = [_]i32{ 1, 2, 3 };
+    const acc = sliceIter(arr[0..]).fold(@as(i32, 0), closure(struct {
+        pub fn call(self: *const @This(), sum: i32, val: *i32) i32 {
+            _ = self;
+            return sum + val.*;
+        }
+    }{}));
+
+    try testing.expectEqual(@as(i32, 6), acc);
+}
+
 pub fn DeriveIterator(comptime Iter: type) type {
     comptime {
         return struct {
@@ -164,6 +211,7 @@ pub fn DeriveIterator(comptime Iter: type) type {
             pub usingnamespace DeriveFuse(Iter);
             pub usingnamespace DeriveMap(Iter);
             pub usingnamespace DeriveFilter(Iter);
+            pub usingnamespace DeriveFold(Iter);
         };
     }
 }
