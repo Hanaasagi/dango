@@ -5,6 +5,7 @@ const Skip = @import("adapters/skip.zig").Skip;
 const Take = @import("adapters/take.zig").Take;
 const Fuse = @import("adapters/fuse.zig").Fuse;
 const Map = @import("adapters/map.zig").Map;
+const Filter = @import("adapters/filter.zig").Filter;
 const meta = @import("meta.zig");
 
 const testing = std.testing;
@@ -140,6 +141,16 @@ pub fn DeriveMap(comptime Iter: type) type {
     }
 }
 
+pub fn DeriveFilter(comptime Iter: type) type {
+    comptime {
+        return struct {
+            pub fn filter(self: Iter, p: anytype) Filter(Iter, @TypeOf(p)) {
+                return Filter(Iter, @TypeOf(p)).new(p, self);
+            }
+        };
+    }
+}
+
 pub fn DeriveIterator(comptime Iter: type) type {
     comptime {
         return struct {
@@ -152,6 +163,7 @@ pub fn DeriveIterator(comptime Iter: type) type {
             pub usingnamespace DeriveTake(Iter);
             pub usingnamespace DeriveFuse(Iter);
             pub usingnamespace DeriveMap(Iter);
+            pub usingnamespace DeriveFilter(Iter);
         };
     }
 }
@@ -163,5 +175,6 @@ test {
     _ = @import("adapters/take.zig");
     _ = @import("adapters/fuse.zig");
     _ = @import("adapters/map.zig");
+    _ = @import("adapters/filter.zig");
     std.testing.refAllDecls(@This());
 }
