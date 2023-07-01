@@ -72,3 +72,48 @@ test "test closure captures values" {
     std.debug.assert(f.call(.{@as(i32, 9)}) == 100);
     std.debug.assert(x == 10);
 }
+
+test "test closure unary function" {
+    const f = closure(struct {
+        pub fn call(self: *const @This(), x: i32) i32 {
+            _ = self;
+            return x;
+        }
+    }{});
+
+    std.debug.assert(f.call(.{@as(i32, 9)}) == 9);
+}
+
+test "test closure binary function" {
+    const f = closure(struct {
+        pub fn call(self: *const @This(), x: i32, y: i32) i32 {
+            _ = self;
+            return x + y;
+        }
+    }{});
+
+    std.debug.assert(f.call(.{ @as(i32, 1), @as(i32, 9) }) == 10);
+}
+
+test "test closure, ternary function" {
+    const f = closure(struct {
+        pub fn call(self: *const @This(), x: i32, y: i32, z: i32) i32 {
+            _ = self;
+            return x + y + z;
+        }
+    }{});
+
+    std.debug.assert(f.call(.{ @as(i32, 1), @as(i32, 9), @as(i32, 10) }) == 20);
+}
+
+test "test closure, different type" {
+    const f = closure(struct {
+        pub fn call(self: *const @This(), x: i32, y: []const u8) i32 {
+            _ = self;
+            const new_y = std.fmt.parseInt(i32, y, 10) catch 0;
+            return x + new_y;
+        }
+    }{});
+
+    std.debug.assert(f.call(.{ @as(i32, 1), @as([]const u8, "9") }) == 10);
+}
