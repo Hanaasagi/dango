@@ -5,7 +5,6 @@ const Skip = @import("adapters/skip.zig").Skip;
 const Take = @import("adapters/take.zig").Take;
 const Fuse = @import("adapters/fuse.zig").Fuse;
 const Map = @import("adapters/map.zig").Map;
-const Map2 = @import("adapters/map.zig").Map2;
 const meta = @import("meta.zig");
 
 const testing = std.testing;
@@ -134,22 +133,8 @@ pub fn DeriveFuse(comptime Iter: type) type {
 pub fn DeriveMap(comptime Iter: type) type {
     comptime {
         return struct {
-            pub fn map(self: Iter, f: anytype) switch (@typeInfo(@TypeOf(f))) {
-                .Fn => blk: {
-                    break :blk Map(Iter, @TypeOf(f));
-                },
-                else => blk: {
-                    break :blk Map2(Iter, @TypeOf(f));
-                },
-            } {
-                switch (@typeInfo(@TypeOf(f))) {
-                    .Fn => {
-                        return Map(Iter, @TypeOf(f)).init(f, self);
-                    },
-                    else => {
-                        return Map2(Iter, @TypeOf(f)).init(f, self);
-                    },
-                }
+            pub fn map(self: Iter, f: anytype) Map(Iter, @TypeOf(f)) {
+                return Map(Iter, @TypeOf(f)).init(f, self);
             }
         };
     }

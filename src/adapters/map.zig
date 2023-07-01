@@ -19,8 +19,14 @@ fn getType(comptime function: type) type {
 }
 
 pub fn Map(comptime Iter: type, comptime F: type) type {
-    const N = comptime (*const fn (Iter.Item) getType(F));
-    const info = @typeInfo(F);
+    const N = switch (@typeInfo(F)) {
+        .Fn => blk: {
+            break :blk comptime (*const fn (Iter.Item) getType(F));
+        },
+        else => blk: {
+            break :blk F;
+        },
+    };
 
     return struct {
         pub const Self: type = @This();
@@ -37,35 +43,11 @@ pub fn Map(comptime Iter: type, comptime F: type) type {
 
         pub fn next(self: *Self) ?Item {
             if (self.iter.next()) |item| {
-                if (info == .Fn) {
+                if (@typeInfo(F) == .Fn) {
                     return self.f(item);
                 } else {
                     return self.f.call(.{item});
                 }
-            } else {
-                return null;
-            }
-        }
-    };
-}
-
-pub fn Map2(comptime Iter: type, comptime F: type) type {
-    return struct {
-        pub const Self: type = @This();
-        pub const Item = getType(F);
-
-        pub usingnamespace DeriveIterator(@This());
-
-        f: F,
-        iter: Iter,
-
-        pub fn init(f: F, iter: Iter) Self {
-            return .{ .f = f, .iter = iter };
-        }
-
-        pub fn next(self: *Self) ?Item {
-            if (self.iter.next()) |item| {
-                return self.f.call(.{item});
             } else {
                 return null;
             }
