@@ -198,6 +198,73 @@ test "test fold closure" {
     try testing.expectEqual(@as(i32, 6), acc);
 }
 
+pub fn DeriveAll(comptime Iter: type) type {
+    return struct {
+        pub fn all(self: Iter, f: anytype) bool {
+            // FIXME: this will copy iterator
+            var it = self;
+            while (it.next()) |value| {
+                if (@typeInfo(@TypeOf(f)) == .Fn) {
+                    if (!f(value)) {
+                        return false;
+                    }
+                } else {
+                    if (!f.call(.{value})) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    };
+}
+
+test "test all function" {
+    const sliceIter = @import("iterator.zig").sliceIter;
+
+    var arr = [_]i32{ 1, 2, 3 };
+    const res = sliceIter(arr[0..]).all(struct {
+        fn lessThan10(x: *i32) bool {
+            return x.* < 10;
+        }
+    }.lessThan10);
+
+    try testing.expectEqual(true, res);
+
+    const res2 = sliceIter(arr[0..]).all(struct {
+        fn lessThan1(x: *i32) bool {
+            return x.* < 1;
+        }
+    }.lessThan1);
+
+    try testing.expectEqual(false, res2);
+}
+
+test "test all closure" {
+    const closure = @import("closure.zig").closure;
+    const sliceIter = @import("iterator.zig").sliceIter;
+
+    var arr = [_]i32{ 1, 2, 3 };
+
+    const res = sliceIter(arr[0..]).all(closure(struct {
+        pub fn call(self: *const @This(), val: *i32) bool {
+            _ = self;
+            return val.* < 10;
+        }
+    }{}));
+
+    try testing.expectEqual(true, res);
+
+    const res2 = sliceIter(arr[0..]).all(closure(struct {
+        pub fn call(self: *const @This(), val: *i32) bool {
+            _ = self;
+            return val.* < 1;
+        }
+    }{}));
+
+    try testing.expectEqual(false, res2);
+}
+
 pub fn DeriveIterator(comptime Iter: type) type {
     comptime {
         return struct {
@@ -212,6 +279,7 @@ pub fn DeriveIterator(comptime Iter: type) type {
             pub usingnamespace DeriveMap(Iter);
             pub usingnamespace DeriveFilter(Iter);
             pub usingnamespace DeriveFold(Iter);
+            pub usingnamespace DeriveAll(Iter);
         };
     }
 }
