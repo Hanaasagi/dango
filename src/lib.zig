@@ -6,6 +6,7 @@ pub const utils = @import("utils.zig");
 pub const iterator = @import("iterator.zig");
 pub const derive = @import("derive.zig");
 pub const Box = @import("box.zig");
+pub const range = @import("range.zig");
 
 test {
     std.testing.refAllDecls(@This());
