@@ -8,3 +8,39 @@
 ![](https://img.shields.io/badge/language-zig-%23ec915c)
 
 <br />
+
+# Documentation
+
+## utils
+
+### merge
+
+```Zig
+const Point = struct {
+    x: u32,
+    y: u32,
+    label: []const u8,
+};
+
+const p = Point{ .x = 0, .y = 1, .label = "A" };
+// merge to new struct
+const new_p = merge(p, .{ .x = 2, .label = "B" });
+// pass multi struct is ok
+const new_p_2 = merge(p, .{ .{ .x = 2 }, .{ .label = "B" } });
+```
+
+### update
+
+```Zig
+const Point = struct {
+    x: u32,
+    y: u32,
+    label: []const u8,
+};
+
+var p = Point{ .x = 0, .y = 1, .label = "A" };
+// update struct in-place
+update(&p, .{ .x = 2, .label = "B" });
+// pass multi struct is ok
+update(&p, .{ .{ .x = 2 }, .{ .label = "B" } });
+```
